@@ -1,0 +1,250 @@
+El punto y coma al final de cada sentencia es para poder determinar la separación de las sentencias si es el caso de que se utilicen varios criterios de búsqueda.
+
+
+--Sentencia SELECT
+Select * from customers
+
+
+--Sentencia COUNT
+Select count(distinct country) from customers
+--COUNT (DISTINCT columna) no es soportada por MS ACCESS
+
+
+--Sentencia DISTINCT
+--para poder efectuar el conteo primero hay que generar una tabla temporal
+SELECT DISTINCT country from customers
+--para después poder efectuar el conteo como operación externa
+Select count(*) as distinctCountries from (select distinct country from customers)
+
+
+--Sentencia WHERE
+select orderid from orderdetails
+where quantity= 10
+
+
+--Aquí hay un error en la sentencia para la consulta, ya que en la tabla parece que se maneja como varchar y no como int el campo de PostalCode
+SELECT * FROM Customers
+WHERE Country = 'Germany'
+AND City = 'Berlin'
+AND PostalCode > 12000;
+
+
+--Manejandolo como cadena se obtiene la consulta
+SELECT * FROM Customers
+WHERE Country = 'Germany'
+AND City = 'Berlin'
+AND PostalCode > "12000";
+
+
+--si la sentencia tiene un símbolo de % encerrado por comillas "" ("%") indica que debe contener un carácter en algún lugar de la columna
+SELECT * FROM Customers
+WHERE Country = 'Germany'
+AND customername like "%B%"
+
+
+--Condición OR para indicar uno u otro
+Select * from customers
+where city = "London"
+or city = "Berlin"
+
+
+--Condición Not para excluir los valores dentro del Not
+Select * from customers
+where not city "México D.F."
+
+
+-- Hay que recordar que para poder efectuar de manera correcta una condición NOT
+-- no hay que poner un signo de = para aplicarla
+Select * from customers
+where CustomerName not like 'A%'
+or 
+customername not like "B%"
+
+
+--Aquí se excluyen todas las coincidencias que esten entre los valores 10 y 60
+--llegando del 1 al 9 y del 61 en adelante
+select * from customers 
+where customerID not between 10 and 60
+
+
+--para la sentencia negada NOT dentro de dos condiciones
+select * from customers 
+where city not in ("México D.F.", "London")
+--esto asegura que no se seleccionaran las celdas que contengan "Mexico" y "London"
+
+
+--Para la condición NOT con signos de comparación
+select * from customers 
+where not customerid > 51
+
+--asegura que no se mostraran los clientes con un id mayor a 51 y variara en función del comparativo
+
+--las condiciones not van variando en función del tipo de dato que se esta filtrando, para el NOT IN primero va el where -condición- y luego el not in (-condicion-)
+
+
+
+--Para los Insert solo necesitamos saber que campos hay en tabla y que tipo de dato es para poder realizar la inserción
+INSERT INTO Customers (CustomerName, ContactName, Address, City, PostalCode, Country)
+VALUES
+('Cardinal', 'Tom B. Erichsen', 'Skagen 21', 'Stavanger', '4006', 'Norway'),
+('Greasy Burger', 'Per Olsen', 'Gateveien 15', 'Sandnes', '4306', 'Norway'),
+('Tasty Tee', 'Finn Egan', 'Streetroad 19B', 'Liverpool', 'L1 0AA', 'UK');
+
+
+--La condición NULL filtra valores que son nulos o que no contienen información
+select CustomerName, ContactName, Address from customers 
+where address is null
+
+
+--para actualizar los valores de una tabla se utiliza la siguiente sintaxis
+UPDATE table_name
+SET column1 = value1, column2 = value2, ...
+WHERE condition;
+
+--solo hay que tener cuidado con la actualización de las columnas
+update customers
+set contactname = "Juan"
+
+
+
+--para la sentencia DELETE hay que tener cuidado y siempre manejar el WHERE y asi evitar borrar toda la tabla ya que se eliminaran todos los registros de la tabla.
+
+DELETE FROM Customers
+
+
+--Para eliminar la tabla totalmente se utiliza la sentencia 
+DROP table customers
+
+
+--sentencia para poder seleccionar los primeros tres registros de la tabla
+select top 3 * from customers
+
+--esta sentencia varia en función del smbd
+--para oracle es distinta tanto para oracle 12 y Old Oracle, tanto para MySQL
+-- también cambia para SQL Server y MS Access
+
+
+--existen funciones agregadas en SQL como MIN(), MAX(), COUNT(), SUM(), AVG()
+
+
+--concatenaciones
+select address + ", " + PostalCode + ", " + City + ", " + Country as DireccionCompleta
+from customers
+
+
+--renombrar tablas
+SELECT * FROM Customers AS Persons;
+
+
+-- JOINS
+--Para poder efectuar un join adecuadamente, considero importante manejar la siguiente estructura
+-- table.column 
+-- inner join tabla a combinar on table.columna = table.column
+
+select orders.orderdate, orders.orderid, customers.customername
+from orders
+inner join customers on orders.customerid = customers.customerid
+
+--existen diferentes tipos de join 
+--inner join regresa valores que coinciden en ambas tablas
+--left outer join regresa todo de la tabla izquierda y los registros que coincidan con la tabla de la derecha (la dirección de las tablas es - from table (tabla izquierda)- inner join table (tabla derecha)
+--right outer join regresa los registros de la tabla de la derecha y los registros que coincidan con la tabla de la izquierda
+--full outer join regresa todos los registros donde haya coincidencia sea izquierda o derecha
+
+select products.productname, products.price, categories.categoryname, categories.description
+from products
+inner join categories on products.categoryid = categories.categoryid
+
+
+--para unir tres tablas es necesario ir uniendo una tras otras
+SELECT Orders.OrderID, Customers.CustomerName, Shippers.ShipperName
+FROM ((Orders  --tabla 1
+INNER JOIN Customers ON Orders.CustomerID = Customers.CustomerID)  --tabla 2
+INNER JOIN Shippers ON Orders.ShipperID = Shippers.ShipperID);  --tabla 3
+
+
+--left join, devuelve todo lo de la tabla izquierda sin importar si tiene registros con match
+SELECT Customers.CustomerName, Orders.OrderID
+FROM Customers
+LEFT JOIN Orders ON Customers.CustomerID = Orders.CustomerID
+ORDER BY Customers.CustomerName;
+
+
+--right join devuelve todo lo de la tabla derecha sin importar si tiene registros con match
+SELECT Orders.OrderID, Employees.LastName, Employees.FirstName
+FROM Orders
+RIGHT JOIN Employees ON Orders.EmployeeID = Employees.EmployeeID
+ORDER BY Orders.OrderID;
+
+
+--full outer join regresa toda la información asi haya o no match en los registros
+SELECT Customers.CustomerName, Orders.OrderID
+FROM Customers
+FULL OUTER JOIN Orders ON Customers.CustomerID=Orders.CustomerID
+ORDER BY Customers.CustomerName;
+
+
+--self join para utilizarse en la misma tabla 
+SELECT A.CustomerName AS CustomerName1, B.CustomerName AS CustomerName2, A.City
+FROM Customers A, Customers B
+WHERE A.CustomerID <> B.CustomerID
+AND A.City = B.City
+ORDER BY A.City;
+
+
+--Union para unir las dos tablas y traer todos los registros con el filtro seleccionado
+SELECT City, Country FROM Customers
+WHERE Country='Germany'
+UNION
+SELECT City, Country FROM Suppliers
+WHERE Country='Germany'
+ORDER BY City;
+
+
+--condición de group by con función de count y left join
+SELECT Shippers.ShipperName, COUNT(Orders.OrderID) AS NumberOfOrders FROM Orders
+LEFT JOIN Shippers ON Orders.ShipperID = Shippers.ShipperID
+GROUP BY ShipperName;
+
+
+--la clausula having se utiliza en SQL el Where no puede utilizarse con funciones agregadas
+SELECT COUNT(CustomerID), Country
+FROM Customers
+GROUP BY Country
+HAVING COUNT(CustomerID) > 0;
+
+-- solo se agrega un sort por orden descendente
+SELECT COUNT(CustomerID), Country
+FROM Customers
+GROUP BY Country
+HAVING COUNT(CustomerID) > 5
+ORDER BY COUNT(CustomerID) DESC;
+
+--aquí se listan los empleados y la cantidad de ordenes que sean mayores a 10 
+SELECT Employees.LastName, COUNT(Orders.OrderID) AS NumberOfOrders
+FROM (Orders
+INNER JOIN Employees ON Orders.EmployeeID = Employees.EmployeeID)
+GROUP BY LastName
+HAVING COUNT(Orders.OrderID) > 10;
+
+--Aquí se seleccionan los apellidos, se cuenta el numero de ordenes de Davolio o Fuller que sean mayores a 25 
+SELECT Employees.LastName, COUNT(Orders.OrderID) AS NumberOfOrders
+FROM Orders
+INNER JOIN Employees ON Orders.EmployeeID = Employees.EmployeeID
+WHERE LastName = 'Davolio' OR LastName = 'Fuller'
+GROUP BY LastName
+HAVING COUNT(Orders.OrderID) > 25;
+
+
+-- La consulta con exists ayuda a verificar si se encuentra un registro y en lugar de realizar toda la consulta primero valida si existe y dependiendo el resultado sea true o false retorna el valor que coincida
+
+SELECT SupplierName
+FROM Suppliers
+WHERE EXISTS (SELECT ProductName FROM Products WHERE Products.SupplierID = Suppliers.supplierID AND Price < 20);
+
+
+--la condición any sirve para comparar valores de una subconsulta
+SELECT Nombre FROM Empleados 
+WHERE Salario > ANY (
+ELECT Salario 
+FROM Salarios )
